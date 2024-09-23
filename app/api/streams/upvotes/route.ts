@@ -28,7 +28,13 @@ export async function POST(req: NextRequest) {
         streamId: data.streamId,
       },
     });
+
+    return NextResponse.json(
+      { message: "Upvoted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { message: "An error occured when creating upvote" },
       { status: 403 }

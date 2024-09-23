@@ -4,9 +4,7 @@ import { z } from "zod";
 
 //@ts-ignore
 import youtubesearchapi from "youtube-search-api";
-
-var YT_REGEX =
-  /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
+import { YT_REGEX } from "@/app/lib/utils";
 
 const CreateStreamSchema = z.object({
   creatorId: z.string(),
@@ -55,8 +53,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      message: "Stream created",
-      id: stream.id,
+      ...stream,
+      hasUpvoted: false,
+      upvotes: 0,
     });
   } catch (error) {
     return NextResponse.json(
@@ -72,11 +71,36 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const creatorId = req.nextUrl.searchParams.get("creatorId");
+
+  if (!creatorId) {
+    return NextResponse.json({
+      message: "Missing creatorId",
+    });
+  }
+
   const streams = await prismaClient.stream.findMany({
     where: {
-      userId: creatorId ?? "",
+      userId: creatorId,
+    },
+    include: {
+      _count: {
+        select: {
+          upvotes: true,
+        },
+      },
+      upvotes: {
+        where: {
+          userId: creatorId,
+        },
+      },
     },
   });
 
-  return NextResponse.json({ streams });
+  return NextResponse.json({
+    streams: streams.map(({ _count, ...rest }) => ({
+      ...rest,
+      upvotes: _count.upvotes,
+      haveUpvoted: rest.upvotes.length ? true : false,
+    })),
+  });
 }

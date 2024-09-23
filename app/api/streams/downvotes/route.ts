@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    return NextResponse.json({ message: "Downvoted successfully" });
   } catch (error) {
     return NextResponse.json(
       { message: "An error occured when creating downote" },
