@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, ThumbsUp, Music } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { Appbar } from "./components/Appbar";
 import { Redirect } from "./components/Redirect";

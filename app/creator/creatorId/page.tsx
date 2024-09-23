@@ -7,12 +7,5 @@ export default function ({
     creatorId: string;
   };
 }) {
-  return (
-    console.log(creatorId),
-    (
-      <div>
-        <StreamView creatorId={creatorId} />
-      </div>
-    )
-  );
+  return <StreamView creatorId={creatorId} playVideo={false} />;
 }

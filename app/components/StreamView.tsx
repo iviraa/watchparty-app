@@ -26,7 +26,13 @@ interface Video {
 
 const REFRESH_INTERVAL_MS = 10 * 1000;
 
-export default function StreamView({ creatorId }: { creatorId: string }) {
+export default function StreamView({
+  creatorId,
+  playVideo = false,
+}: {
+  creatorId: string;
+  playVideo: boolean;
+}) {
   const [inputLink, setInputLink] = useState("");
   const [queue, setQueue] = useState<Video[]>([]);
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -37,7 +43,10 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
       credentials: "include",
     });
     const json = await res.json();
-    setQueue(json.streams);
+    setQueue(
+      json.streams.sort((a: any, b: any) => (a.upvotes < b.upvotes ? 1 : -1))
+    );
+    setCurrentVideo(json.activeStream);
   }
 
   useEffect(() => {
@@ -83,10 +92,13 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
     });
   };
 
-  const playNextVideo = () => {
+  const playNextVideo = async () => {
     if (queue.length > 0) {
-      setCurrentVideo(queue[0]);
-      setQueue(queue.slice(1));
+      const data = await fetch(`/api/streams//next`, {
+        method: "GET",
+      });
+      const json = await data.json();
+      setCurrentVideo(json.stream);
     }
   };
 
@@ -135,15 +147,25 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
           <Card>
             <CardContent className="p-4">
               {currentVideo ? (
-                <div className="flex items-center">
-                  <img
-                    src={`/placeholder.svg?height=640&width=480`}
-                    alt="Current Video"
-                    className="w-24 h-18 object-cover rounded mr-4 cursor-pointer"
-                  />
-                  <p className="mt-2 text-center font-semibold py-8">
-                    {currentVideo.title}
-                  </p>
+                <div>
+                  {playVideo ? (
+                    <>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1`}
+                        allow="autoplay"
+                      ></iframe>
+                    </>
+                  ) : (
+                    <>
+                      <img
+                        src={currentVideo.bigImg}
+                        className="w-24 h-18 object-cover rounded mr-4 cursor-pointer"
+                      />
+                      <p className="mt-2 text-center font-semibold py-8">
+                        {currentVideo.title}
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <p className="text-center py-8">No video playing</p>
@@ -179,9 +201,11 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             </Button>
           </form>
 
-          <Button onClick={playNextVideo} className="w-full mt-2">
-            <SkipForward className="mr-2  h-4 w-4" /> Play Next
-          </Button>
+          {playVideo && (
+            <Button onClick={playNextVideo} className="w-full mt-2">
+              <SkipForward className="mr-2  h-4 w-4" /> Play Next
+            </Button>
+          )}
         </div>
 
         <div className="space-y-4">
